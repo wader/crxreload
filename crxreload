@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+// see README.md for usage. licensed as public domain.
+// mattias.wadman@gmail.com
+
+var config = {
+  listen_host: "localhost",
+  listen_port: 8080,
+  watch_path_re: /\.(json|js|html|htm|css|json|png|jpg|jpeg|svg)$/i
+}
+
+var fs = require("fs");
+var path = require("path");
+var http = require("http");
+var events = require("events");
+
+var walk = function(dir, test_fn) {
+  var results = [];
+  var walk_r = function(dir) {
+    var list = fs.readdirSync(dir);
+    list.forEach(function(f) {
+      fullpath = path.join(dir, f);
+      var stat = fs.statSync(fullpath);
+      if (stat && stat.isDirectory()) {
+         walk_r(fullpath);
+      } else if (test_fn(fullpath)) {
+        results.push(fullpath);
+      }
+    });
+  };
+
+  walk_r(dir);
+
+  return results;
+}
+
+var watch_emitter = new events.EventEmitter();
+
+http.createServer(function(req, res) {
+  console.log("Extension connected");
+
+  watch_emitter.once("change", function() {
+    console.log("Telling extension to reload");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.end();
+  });
+}).listen(config.listen_port, config.listen_host);
+console.log("Web server at http://" + config.listen_host + ":" + config.listen_port);
+
+console.log("Watching:");
+var watch_paths = walk(".", function(path) {
+  return config.watch_path_re.test(path);
+});
+
+watch_paths.forEach(function(p, index, array) {
+  fs.watch(p, {}, function() {
+    watch_emitter.emit("change");
+  });
+  console.log("  ", p);
+});
+
