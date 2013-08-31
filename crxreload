@@ -37,20 +37,22 @@ var watch_emitter = new events.EventEmitter();
 
 http.createServer(function(req, res) {
   console.log("Extension connected");
-
-  watch_emitter.once("change", function() {
+  var listener_fn = function() {
     console.log("Telling extension to reload");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.end();
+  };
+  watch_emitter.once("change", listener_fn);
+  req.on("close", function() {
+    watch_emitter.removeListener("change", listener_fn);
   });
 }).listen(config.listen_port, config.listen_host);
-console.log("Web server at http://" + config.listen_host + ":" + config.listen_port);
+console.log("Server at http://" + config.listen_host + ":" + config.listen_port);
 
 console.log("Watching:");
 var watch_paths = walk(".", function(path) {
   return config.watch_path_re.test(path);
 });
-
 watch_paths.forEach(function(p, index, array) {
   fs.watch(p, {}, function() {
     watch_emitter.emit("change");
