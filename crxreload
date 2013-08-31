@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// see README.md for usage. licensed as public domain.
+// See README.md for usage. Licensed as public domain.
 // mattias.wadman@gmail.com
 
 var config = {

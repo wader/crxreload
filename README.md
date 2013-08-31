@@ -1,53 +1,34 @@
 Reload Chrome extension automatically when files are changed.
-No more switch to extensions tab and Ctrl/⌘+R.
+No more Ctrl/⌘+R to reload extension.
 
 ## How to use
 
 Make sure nodejs is installed.
 
-Put this code snippet at the top in some extension source file while
-developing:
+Copy `crxreload_client.js` to your extension and add it as the first
+background script in your `manifest.json` file (remember to remove it
+when making a release etc).
 
-```JavaScript
-(function() {
-  var r = new XMLHttpRequest();
-  r.open("GET", "http://localhost:8080");
-  r.onreadystatechange = function() {
-    var readystate_complete = 4;
-    var status_manual_page_reload = 0;
-    if (r.readyState != readystate_complete ||
-        r.status == status_manual_page_reload) {
-      return;
-    }
+Run `crxreload` in your extension root directory. You will see a list of
+files that are watched for changes.
 
-    // reload extension
-    chrome.runtime.reload();
+Manually reload the extension in Chrome and you should see a
+`Extension connected` log line in the terminal.
 
-    // optionally reload page also (e.g. content script)
-    //document.location.reload();
-  };
-  r.send();
-})();
-```
+Now save some file and you should see a `Telling extension to reload`
+log line and if everything worked out fine the extension should have
+been reloaded.
 
-Run `crxreload` in your extension root directory:
-
-Manually reload the extension and maybe do what ever you need to trigger
-your extension to run and you should see a `Extension connected` log line.
-
-Now edit and save some file and you should see a `Telling extension to reload`
-log line. If everything worked out the extension should now be reloaded.
-
-Depending on how your extension work you might need to manually reload some
-browser page to run the extension. See comment in code above for how to
-automate that also.
+Optionally you can also change `crxreload_client.js` to reload the current
+page. See comment a bit down in the file.
 
 ## How it works
 
-The code snippet does a HTTP request to a web server run by `crxreload`.
-`crxreload` hogs the request until some file change. When something changes
-the requests is completed and the code snippet triggers a reload.
+The client does a request to a web server run by `crxreload` and the
+request is not completed until some file is changed. When the requests
+is completed the client triggers a reload.
 
-The reason why you want the code snippet at the top is that it makes it
-possible to reload even when there are some syntax errors.
+The reason why you want the client script to be the first background
+script is because it makes it possible to reload even when there are
+some syntax error etc.
 
