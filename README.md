@@ -1,5 +1,31 @@
+
 Reload Chrome extension automatically when files are changed.
 No more Ctrl/⌘+R to reload extension.
+
+# New method
+
+Install [devd](https://github.com/cortesi/devd) and run `devd -l .` in the directory you want to watch for changes.
+
+Paste this into the chrome extension source somewhere:
+
+```javascript
+(() => {
+  let ws = new WebSocket('ws://127.0.0.1:8000/.devd.livereload');
+  ws.onmessage = () => {
+    // reload current tab with some delay
+    // require permissions in manifest
+    // chrome.tabs.executeScript(null, {
+    //   code: 'setTimeout(function() { document.location.reload(); }, 200);'
+    // });
+
+    // reload extension
+    chrome.runtime.reload();
+  };
+})();
+```
+
+
+# Old method below
 
 ## How to use
 
